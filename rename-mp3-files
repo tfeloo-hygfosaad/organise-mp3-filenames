@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+sanitize() {
+    sed 's/[\/:*?"<>|]/-/g; s/[[:cntrl:]]//g; s/  */ /g'
+}
+
+process_file() {
+    f="$1"
+
+    track=""
+    artist=""
+    title=""
+
+    while IFS='=' read -r k v; do
+        case "$k" in
+            TAG:track) track="$v" ;;
+            TAG:artist) artist="$v" ;;
+            TAG:title) title="$v" ;;
+        esac
+    done < <(
+        ffprobe -v quiet \
+        -show_entries format_tags=track,artist,title \
+        -of default=noprint_wrappers=1:nokey=0 \
+        "$f"
+    )
+
+    track=${track%%/*}
+
+    track=${track:-00}
+    artist=${artist:-Unknown}
+    title=${title:-Unknown}
+
+    printf -v track "%02d" "$track"
+
+    artist=$(printf '%s' "$artist" | sanitize)
+    title=$(printf '%s' "$title" | sanitize)
+
+    new="${track}-${artist} - ${title}.mp3"
+    dir=$(dirname "$f")
+    target="$dir/$new"
+
+    if [[ "$f" == "$target" ]]; then
+        printf "SKIP    | %s\n" "$f"
+        return
+    fi
+
+    if [[ -e "$target" ]]; then
+        printf "EXISTS  | %s -> %s\n" "$f" "$new"
+        return
+    fi
+
+    mv -- "$f" "$target"
+    printf "RENAMED | %s -> %s\n" "$f" "$new"
+}
+
+export -f sanitize
+export -f process_file
+
+root="${1:-.}"
+
+find "$root" -type f -iname '*.mp3' -print0 |
+xargs -0 -n 1 -P "$(nproc)" bash -c 'process_file "$@"' _
