@@ -63,7 +63,7 @@ Example:
 
 ```
 chmod +x organise-mp3-filenames
-mv organise-mp3-filenames ~/.local/bin/
+mv ./bin/organise-mp3-filenames ~/.local/bin/
 ```
 
 ## Usage
