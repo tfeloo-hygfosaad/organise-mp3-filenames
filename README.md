@@ -57,13 +57,17 @@ sudo pacman -S ffmpeg
 
 ## Installation
 
-Clone or download the script and place it in your PATH.
+Installing script to your bin folder:
 
-Example:
-
+```bash
+make install
 ```
-chmod +x organise-mp3-filenames
-mv ./bin/organise-mp3-filenames ~/.local/bin/
+
+Removing script from it cleanly:
+
+```bash
+make uninstall
+```
 ```
 
 ## Usage
